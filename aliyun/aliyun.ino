@@ -7,12 +7,12 @@
 
 #define LED     D4
 #define pinDHT11 D0     
-#define WIFI_SSID        "312"//替换自己的WIFI
-#define WIFI_PASSWD      "dianzi312"//替换自己的WIFI
+#define WIFI_SSID        "CMCC-b4Q9"//替换自己的WIFI
+#define WIFI_PASSWD      "31415926"//替换自己的WIFI
 
-#define PRODUCT_KEY      "a1DNFpTxurM" //替换自己的PRODUCT_KEY
-#define DEVICE_NAME      "bilibili_esp" //替换自己的DEVICE_NAME
-#define DEVICE_SECRET    "KFnedroTcIPGm2lMHP63XwjmhMnC17Gz"//替换自己的DEVICE_SECRET
+#define PRODUCT_KEY      "a1cMYN50OBh" //替换自己的PRODUCT_KEY
+#define DEVICE_NAME      "w_esp8266_test_03" //替换自己的DEVICE_NAME
+#define DEVICE_SECRET    "u3Aa5ST5ohDS6uPvmiY8sxswyyaNW8GG"//替换自己的DEVICE_SECRET
 
 #define DEV_VERSION       "S-TH-WIFI-v1.0-20190220"        //固件版本信息
 
