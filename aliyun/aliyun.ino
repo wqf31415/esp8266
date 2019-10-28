@@ -2,18 +2,17 @@
 #include <PubSubClient.h>  //安装PubSubClient库
 #include <ArduinoJson.h>   //json  V5版本
 #include "aliyun_mqtt.h"
-
+#include <SimpleDHT.h>
 //需要安装crypto库
 
 #define LED     D4
-#define LED2     D1
-   
+#define pinDHT11 D0     
 #define WIFI_SSID        "CMCC-b4Q9"//替换自己的WIFI
 #define WIFI_PASSWD      "31415926"//替换自己的WIFI
 
-#define PRODUCT_KEY      "a1REmKBuTek" //替换自己的PRODUCT_KEY
-#define DEVICE_NAME      "w_esp8266_test_02" //替换自己的DEVICE_NAME
-#define DEVICE_SECRET    "TbdSgi90KqpoG3P0r3Q3cyhdVOojvG0t"//替换自己的DEVICE_SECRET
+#define PRODUCT_KEY      "a1cMYN50OBh" //替换自己的PRODUCT_KEY
+#define DEVICE_NAME      "w_esp8266_test_03" //替换自己的DEVICE_NAME
+#define DEVICE_SECRET    "u3Aa5ST5ohDS6uPvmiY8sxswyyaNW8GG"//替换自己的DEVICE_SECRET
 
 #define DEV_VERSION       "S-TH-WIFI-v1.0-20190220"        //固件版本信息
 
@@ -28,11 +27,11 @@ unsigned long lastMs = 0;
 
 WiFiClient   espClient;
 PubSubClient mqttClient(espClient);
-
+SimpleDHT11 dht11(pinDHT11);
 
 byte temperature = 0;
 byte humidity = 0;
-
+int err = SimpleDHTErrSuccess;
 
          
 void init_wifi(const char *ssid, const char *password)      //连接WiFi
@@ -67,8 +66,6 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length) //mqtt回调
     {
         StaticJsonBuffer<100> jsonBuffer;
         JsonObject &root = jsonBuffer.parseObject(payload);
-
-        if(root["params"]["LightSwitch"].success()){
         int params_LightSwitch = root["params"]["LightSwitch"];
         if(params_LightSwitch==1)
         {Serial.println("led off");
@@ -77,18 +74,6 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length) //mqtt回调
         else
         {Serial.println("led on");
         digitalWrite(LED, LOW); }
-        }
-
-        if(root["params"]["LightSwitch2"].success()){
-          int params_LightSwitch2 = root["params"]["LightSwitch2"];
-          if(params_LightSwitch2==1){
-            Serial.println("led2 off");
-            digitalWrite(LED2, HIGH); 
-          } else {
-            Serial.println("led2 on");
-            digitalWrite(LED2, LOW); 
-            }
-          }
         if (!root.success())
         {
             Serial.println("parseObject() failed");
@@ -130,7 +115,7 @@ void mqtt_interval_post()
     char jsonBuf[1024];
 
     //sprintf(param, "{\"MotionAlarmState\":%d}", digitalRead(13));
-    sprintf(param, "{\"LightSwitch\":%d,\"LightSwitch2\":%d}", !digitalRead(LED),!digitalRead(LED2));
+    sprintf(param, "{\"LightSwitch\":%d,\"CurrentTemperature\":%d,\"CurrentHumidity\":%d}", !digitalRead(LED),temperature,humidity);
     sprintf(jsonBuf, ALINK_BODY_FORMAT, ALINK_METHOD_PROP_POST, param);
     Serial.println(jsonBuf);
     mqttClient.publish(ALINK_TOPIC_PROP_POST, jsonBuf);
@@ -143,7 +128,6 @@ void setup()
    
 
     pinMode(LED, OUTPUT);
-    pinMode(LED2, OUTPUT);
     /* initialize serial for debugging */
     Serial.begin(115200);
 
@@ -157,9 +141,16 @@ void setup()
 // the loop function runs over and over again forever
 void loop()
 {
-    if (millis() - lastMs >= 10000)  //10s
+    if (millis() - lastMs >= 5000)  //5S
     {
         lastMs = millis();
+       if ((err = dht11.read(&temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
+        Serial.print("Read DHT11 failed, err="); Serial.println(err);delay(1000);
+        return;
+         }
+        Serial.print("Sample OK: ");
+        Serial.print((int)temperature); Serial.print(" *C, "); 
+        Serial.print((int)humidity); Serial.println(" H");
   
         mqtt_check_connect();
         /* Post */        
