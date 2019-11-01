@@ -130,7 +130,7 @@ void mqtt_interval_post()
     char jsonBuf[1024];
 
     //sprintf(param, "{\"MotionAlarmState\":%d}", digitalRead(13));
-    sprintf(param, "{\"LightSwitch\":%d,\"LightSwitch2\":%d}", digitalRead(LED),digitalRead(LED2));
+    sprintf(param, "{\"LightSwitch\":%d,\"LightSwitch2\":%d}", !digitalRead(LED), !digitalRead(LED2));
     sprintf(jsonBuf, ALINK_BODY_FORMAT, ALINK_METHOD_PROP_POST, param);
     Serial.println(jsonBuf);
     mqttClient.publish(ALINK_TOPIC_PROP_POST, jsonBuf);
