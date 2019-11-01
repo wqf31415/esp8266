@@ -70,7 +70,7 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length) //mqtt回调
 
         if(root["params"]["LightSwitch"].success()){
         int params_LightSwitch = root["params"]["LightSwitch"];
-        if(params_LightSwitch==1)
+        if(params_LightSwitch==0)
         {Serial.println("led off");
         digitalWrite(LED, HIGH); 
         }
@@ -81,7 +81,7 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length) //mqtt回调
 
         if(root["params"]["LightSwitch2"].success()){
           int params_LightSwitch2 = root["params"]["LightSwitch2"];
-          if(params_LightSwitch2==1){
+          if(params_LightSwitch2==0){
             Serial.println("led2 off");
             digitalWrite(LED2, HIGH); 
           } else {
@@ -130,7 +130,7 @@ void mqtt_interval_post()
     char jsonBuf[1024];
 
     //sprintf(param, "{\"MotionAlarmState\":%d}", digitalRead(13));
-    sprintf(param, "{\"LightSwitch\":%d,\"LightSwitch2\":%d}", !digitalRead(LED),!digitalRead(LED2));
+    sprintf(param, "{\"LightSwitch\":%d,\"LightSwitch2\":%d}", digitalRead(LED),digitalRead(LED2));
     sprintf(jsonBuf, ALINK_BODY_FORMAT, ALINK_METHOD_PROP_POST, param);
     Serial.println(jsonBuf);
     mqttClient.publish(ALINK_TOPIC_PROP_POST, jsonBuf);
