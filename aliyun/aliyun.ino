@@ -33,13 +33,11 @@ byte temperature = 0;
 byte humidity = 0;
 int err = SimpleDHTErrSuccess;
 
-         
-void init_wifi(const char *ssid, const char *password)      //连接WiFi
-{
+void init_wifi(const char *ssid, const char *password) {
+  //连接WiFi
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED)
-    {
+    while (WiFi.status() != WL_CONNECTED) {
         Serial.println("WiFi does not connect, try again ...");
         delay(500);
     }
@@ -49,55 +47,50 @@ void init_wifi(const char *ssid, const char *password)      //连接WiFi
     Serial.println(WiFi.localIP());
 }
 
-void mqtt_callback(char *topic, byte *payload, unsigned int length) //mqtt回调函数
-{
+//mqtt回调函数
+void mqtt_callback(char *topic, byte *payload, unsigned int length) {
     Serial.print("Message arrived [");
     Serial.print(topic);
     Serial.print("] ");
     payload[length] = '\0';
     Serial.println((char *)payload);
-   // https://arduinojson.org/v5/assistant/  json数据解析网站
+    // https://arduinojson.org/v5/assistant/  json数据解析网站
 
-    
     Serial.println("   ");
-  Serial.println((char *)payload);
-   Serial.println("   ");
-    if (strstr(topic, ALINK_TOPIC_PROP_SET))
-    {
+    Serial.println((char *)payload);
+    Serial.println("   ");
+    if (strstr(topic, ALINK_TOPIC_PROP_SET)) {
         StaticJsonBuffer<100> jsonBuffer;
         JsonObject &root = jsonBuffer.parseObject(payload);
         int params_LightSwitch = root["params"]["LightSwitch"];
         if(params_LightSwitch==1)
         {Serial.println("led off");
         digitalWrite(LED, HIGH); 
+        } else {
+          Serial.println("led on");
+          digitalWrite(LED, LOW); 
         }
-        else
-        {Serial.println("led on");
-        digitalWrite(LED, LOW); }
-        if (!root.success())
-        {
+        if (!root.success()) {
             Serial.println("parseObject() failed");
             return;
         }
     }
 }
-void mqtt_version_post()
-{
+
+void mqtt_version_post() {
     char param[512];
     char jsonBuf[1024];
 
     //sprintf(param, "{\"MotionAlarmState\":%d}", digitalRead(13));
     sprintf(param, "{\"id\": 123,\"params\": {\"version\": \"%s\"}}", DEV_VERSION);
-   // sprintf(jsonBuf, ALINK_BODY_FORMAT, ALINK_METHOD_PROP_POST, param);
+    // sprintf(jsonBuf, ALINK_BODY_FORMAT, ALINK_METHOD_PROP_POST, param);
     Serial.println(param);
     mqttClient.publish(ALINK_TOPIC_DEV_INFO, param);
 }
-void mqtt_check_connect()
-{
-    while (!mqttClient.connected())//
-    {
-        while (connect_aliyun_mqtt(mqttClient, PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET))
-        {
+
+void mqtt_check_connect() {
+    while (!mqttClient.connected()) {
+        while (connect_aliyun_mqtt(mqttClient, PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET)) {
             Serial.println("MQTT connect succeed!");
             //client.subscribe(ALINK_TOPIC_PROP_POSTRSP);
             mqttClient.subscribe(ALINK_TOPIC_PROP_SET);
@@ -106,11 +99,9 @@ void mqtt_check_connect()
             mqtt_version_post();
         }
     }
-    
 }
 
-void mqtt_interval_post()
-{
+void mqtt_interval_post() {
     char param[512];
     char jsonBuf[1024];
 
@@ -122,12 +113,12 @@ void mqtt_interval_post()
 }
 
 
-void setup()
-{
-
-   
-
+void setup() {
     pinMode(LED, OUTPUT);
+
+    // 初始时设置高电平，让esp8266 led 熄灭
+    digitalWrite(LED,HIGH);
+    
     /* initialize serial for debugging */
     Serial.begin(115200);
 
@@ -139,25 +130,21 @@ void setup()
 }
 
 // the loop function runs over and over again forever
-void loop()
-{
-    if (millis() - lastMs >= 5000)  //5S
-    {
-        lastMs = millis();
-       if ((err = dht11.read(&temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
+void loop() {
+  if (millis() - lastMs >= 5*60*1000) {
+      //5S
+      lastMs = millis();
+      if ((err = dht11.read(&temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
         Serial.print("Read DHT11 failed, err="); Serial.println(err);delay(1000);
         return;
-         }
-        Serial.print("Sample OK: ");
-        Serial.print((int)temperature); Serial.print(" *C, "); 
-        Serial.print((int)humidity); Serial.println(" H");
+      }
+      Serial.print("Sample OK: ");
+      Serial.print((int)temperature); Serial.print(" *C, "); 
+      Serial.print((int)humidity); Serial.println(" H");
   
-        mqtt_check_connect();
-        /* Post */        
-        mqtt_interval_post();
-    }
-
-    mqttClient.loop();
-
-   
+      mqtt_check_connect();
+      /* Post */        
+      mqtt_interval_post();
+  }
+  mqttClient.loop();
 }
